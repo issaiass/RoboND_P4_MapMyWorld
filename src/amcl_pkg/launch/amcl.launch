@@ -1,0 +1,57 @@
+<launch>
+     <!-- args for the map server -->
+    <arg name="rvizconfig" default="$(find amcl_pkg)/viz/amclconfig.rviz"/>
+    
+    <!-- Launch Gazebo with the turtlebot world -->
+    <include file="$(find my_robot)/launch/world.launch">
+        <arg name="rvizconfig" default="$(arg rvizconfig)"/>
+    </include>
+   
+    <!-- args for the map server -->
+    <arg name="map_file" default="$(find amcl_pkg)/maps/map.yaml"/>
+
+    <!-- launch the map server -->
+    <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+
+    <!-- AMCL Node -->
+    <node name="amcl" pkg="amcl" type="amcl" output="screen">
+      <!-- nav stack is waiting for scan topoc -->
+      <!--remap from="scan" to="<package_path>/scan"/-->
+      <param name="odom_frame_id" value="odom"/>
+      <param name="odom_model_type" value="diff-corrected"/>
+      <param name="base_frame_id" value="robot_footprint"/>
+      <param name="global_frame_id" value="map"/>
+
+     <!-- set the values of the initial pose -->
+      <param name="initial_pose_x" value="0"/>
+      <param name="initial_pose_y" value="0"/>
+
+     <!-- tunning parameters -->
+      <param name="min_particles"   value="20"/>
+      <param name="max_particles"   value="1000"/>
+      <param name="initial_pose_a"  value="0.3"/>
+      <!--param name="update_min_a"    value="0.3"/-->
+      <!--param name="update_min_d"    value="0.2"/-->
+      <param name="odom_model_type" value="diff-corrected"/>
+
+    </node>
+
+    <!-- Move Base NOde-->
+    <node name="move_base" pkg="move_base" type="move_base" respawn="false" output="screen">
+      <!-- move base is waiting for scan topoc -->
+      <!--remap from="scan" to="<package_path>/scan"/-->
+      
+      <!-- ROS Planners -->
+      <param name="base_global_planner" value="navfn/NavfnROS" />
+      <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
+
+      <!-- Move Base Configuration Files -->
+      <rosparam file="$(find amcl_pkg)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
+      <rosparam file="$(find amcl_pkg)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+      <rosparam file="$(find amcl_pkg)/config/local_costmap_params.yaml" command="load" />
+      <rosparam file="$(find amcl_pkg)/config/global_costmap_params.yaml" command="load" />
+      <rosparam file="$(find amcl_pkg)/config/base_local_planner_params.yaml" command="load" />
+
+    </node>
+
+</launch> 
